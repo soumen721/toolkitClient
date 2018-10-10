@@ -35,7 +35,6 @@ public class ToolkitHeaderInjectHandler implements SOAPHandler<SOAPMessageContex
 			SOAPMessage soapMsg = context.getMessage();
 
 			if (isRequest) {
-				// soapMsg.writeTo(System.out);
 				SOAPEnvelope soapEnv = soapMsg.getSOAPPart().getEnvelope();
 				SOAPHeader soapHeader = soapEnv.getHeader();
 				SOAPBody soapBody = soapEnv.getBody();
@@ -43,8 +42,9 @@ public class ToolkitHeaderInjectHandler implements SOAPHandler<SOAPMessageContex
 					soapHeader = soapEnv.addHeader();
 				}
 
-				SOAPElement trackingHeader = soapHeader.addChildElement(soapEnv.createName("trackingHeader", "ns7",
-						"http://www.everythingeverywhere.com/common/message/SoapHeader/v1.0"));
+				QName bodyName = new QName("http://www.everythingeverywhere.com/common/message/SoapHeader/v1.0",
+						"trackingHeader");
+				SOAPElement trackingHeader = soapHeader.addChildElement(bodyName);
 
 				Node node = (Node) soapBody
 						.getElementsByTagNameNS("http://messaging.ei.tmobile.net/datatypes", "requestId").item(0);
@@ -61,11 +61,11 @@ public class ToolkitHeaderInjectHandler implements SOAPHandler<SOAPMessageContex
 				soapMsg.saveChanges();
 				System.out.println("\n\n************* VALUE :: " + node.getChildNodes().item(0).getNodeValue());
 
-				soapMsg.writeTo(System.out);
 			}
 
 			// Printing Request/Response
-
+			soapMsg.writeTo(System.out);
+			System.out.println("\n");
 		} catch (SOAPException | IOException | DatatypeConfigurationException e) {
 			System.out.println("Exception :: " + e.getMessage());
 		}
@@ -76,7 +76,7 @@ public class ToolkitHeaderInjectHandler implements SOAPHandler<SOAPMessageContex
 
 	@Override
 	public boolean handleFault(SOAPMessageContext context) {
-		System.out.println("Client : handleFault()......");
+		System.out.println("\nClient : handleFault()......");
 		return true;
 	}
 
@@ -87,7 +87,7 @@ public class ToolkitHeaderInjectHandler implements SOAPHandler<SOAPMessageContex
 
 	@Override
 	public Set<QName> getHeaders() {
-		System.out.println("Client : getHeaders()......");
+		System.out.println("\nClient : getHeaders()......");
 		return null;
 	}
 

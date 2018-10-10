@@ -80,9 +80,11 @@ public class ToolkitClientTest {
 
 		} catch (BusinessFault | TechnicalFault | URISyntaxException exc) {
 
-			System.out.println("An error occured while calling service getGetContextWithOperations"+ exc);
+			System.out.println("An error occured while calling service getGetContextWithOperations" + exc);
 		}
 
+		System.out.println("Toolkit Details UserID : " + toolkitLoginInfo.getUid() + "\tRoles : "
+				+ toolkitLoginInfo.getRoleList() + "\t MSISDN : " + toolkitLoginInfo.getMsisdn());
 		return toolkitLoginInfo;
 	}
 }
