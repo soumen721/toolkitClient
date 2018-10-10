@@ -4,15 +4,14 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.GregorianCalendar;
-import java.util.Iterator;
 import java.util.Set;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
+import javax.xml.soap.Node;
 import javax.xml.soap.SOAPBody;
-import javax.xml.soap.SOAPBodyElement;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPException;
@@ -23,7 +22,8 @@ import javax.xml.ws.handler.soap.SOAPHandler;
 import javax.xml.ws.handler.soap.SOAPMessageContext;
 
 public class ToolkitHeaderInjectHandler implements SOAPHandler<SOAPMessageContext> {
-	//private static final Logger log = Logger.getLogger(ToolkitHeaderInjectHandler.class);
+	// private static final Logger log =
+	// Logger.getLogger(ToolkitHeaderInjectHandler.class);
 
 	@Override
 	public boolean handleMessage(SOAPMessageContext context) {
@@ -33,51 +33,39 @@ public class ToolkitHeaderInjectHandler implements SOAPHandler<SOAPMessageContex
 
 		try {
 			SOAPMessage soapMsg = context.getMessage();
-			soapMsg.writeTo(System.out);
+
 			if (isRequest) {
+				// soapMsg.writeTo(System.out);
 				SOAPEnvelope soapEnv = soapMsg.getSOAPPart().getEnvelope();
 				SOAPHeader soapHeader = soapEnv.getHeader();
-
-				// if no header, add one
+				SOAPBody soapBody = soapEnv.getBody();
 				if (soapHeader == null) {
 					soapHeader = soapEnv.addHeader();
 				}
 
-				SOAPElement trackingHeader = soapHeader.addChildElement("trackingHeader", "v7");
+				SOAPElement trackingHeader = soapHeader.addChildElement(soapEnv.createName("trackingHeader", "ns7",
+						"http://www.everythingeverywhere.com/common/message/SoapHeader/v1.0"));
 
-				SOAPBody soapBody = soapEnv.getBody();
-				@SuppressWarnings("unchecked")
-				Iterator<SOAPBodyElement> elements = soapBody.getChildElements();
-
-				String requestId = null;
-				while (elements.hasNext()) {
-					SOAPBodyElement element = elements.next();
-					System.out.println("Param Name " + element.getNodeValue());
-					@SuppressWarnings("unchecked")
-					Iterator<SOAPBodyElement> params = element.getChildElements();
-
-					while (params.hasNext()) {
-						SOAPBodyElement param = params.next();
-						System.out.println(
-								"Param Name Inner " + element.getNodeValue() + " Node Value : " + param.getValue());
-						if ("correlationId".equals(param.getNodeName())) {
-							requestId = param.getNodeValue();
-						}
-					}
-				}
-
+				Node node = (Node) soapBody
+						.getElementsByTagNameNS("http://messaging.ei.tmobile.net/datatypes", "requestId").item(0);
+				String requestId = node.getChildNodes().item(0).getNodeValue();
 				SOAPElement requestIdNode = trackingHeader.addChildElement("requestId");
-				requestIdNode.addTextNode(requestId);
+				requestIdNode.setValue(requestId);
 
 				GregorianCalendar gcal = GregorianCalendar.from(LocalDateTime.now().atZone(ZoneId.systemDefault()));
 				XMLGregorianCalendar dateTimeNow = DatatypeFactory.newInstance().newXMLGregorianCalendar(gcal);
-				SOAPElement timestampNode = trackingHeader.addChildElement("timestamp");
-				timestampNode.addTextNode(dateTimeNow.toString());
 
+				SOAPElement timestampNode = trackingHeader.addChildElement("timestamp");
+				timestampNode.setValue(dateTimeNow.toString());
+
+				soapMsg.saveChanges();
+				System.out.println("\n\n************* VALUE :: " + node.getChildNodes().item(0).getNodeValue());
+
+				soapMsg.writeTo(System.out);
 			}
 
 			// Printing Request/Response
-			soapMsg.writeTo(System.out);
+
 		} catch (SOAPException | IOException | DatatypeConfigurationException e) {
 			System.out.println("Exception :: " + e.getMessage());
 		}
@@ -94,7 +82,7 @@ public class ToolkitHeaderInjectHandler implements SOAPHandler<SOAPMessageContex
 
 	@Override
 	public void close(MessageContext context) {
-		System.out.println("Client : close()......");
+		System.out.println("\nClient : close()......");
 	}
 
 	@Override
